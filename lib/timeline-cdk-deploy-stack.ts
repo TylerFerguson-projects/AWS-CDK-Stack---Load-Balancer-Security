@@ -3,8 +3,6 @@ import { Construct } from 'constructs';
 import { Networking } from './networking';
 import { Security } from './security';
 import { Compute } from './compute';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { LoadBalancer } from './load-balancer';
 
 export class TimelineCdkDeployStack extends cdk.Stack {
