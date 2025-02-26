@@ -8,20 +8,21 @@ export class Networking extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
   
-    // Create minimal VPC with just public subnets (free tier friendly)
+    // Create VPC with public and isolated subnets
+    // Still free tier friendly, but with better security design
     this.vpc = new ec2.Vpc(this, 'TimelineVPC', {
-      maxAzs: 2,
-      natGateways: 0, // No NAT Gateways to save costs
+      maxAzs: 2,                        // 2 AZs for high availability
+      natGateways: 0,                   //  I am skipping NAT Gateways to avoid charges 
       subnetConfiguration: [
         {
-          name: 'timeline-public',
+          name: 'public-subnet',
           subnetType: ec2.SubnetType.PUBLIC,
           cidrMask: 24,
-          mapPublicIpOnLaunch: true
+          mapPublicIpOnLaunch: true     // Auto-assign public IPs in public subnets
         },
         {
-          name: 'timeline-private',
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          name: 'private-subnet',
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,  
           cidrMask: 24
         }
       ],
@@ -29,6 +30,23 @@ export class Networking extends Construct {
       enableDnsHostnames: true
     });
     
+    // Create an S3 gateway endpoint to allow private subnets to access S3
+    // This is free and doesn't require NAT gateways
+    this.vpc.addGatewayEndpoint('S3GatewayEndpoint', {
+      service: ec2.GatewayVpcEndpointAwsService.S3,
+      subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }]
+    });
+
+    // Create a DynamoDB gateway endpoint
+    // Also free and doesn't require NAT gateways
+    this.vpc.addGatewayEndpoint('DynamoDBEndpoint', {
+      service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+      subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }]
+    });
+    
+    // Add meaningful tags
     cdk.Tags.of(this.vpc).add('Application', 'Timeline');
+    cdk.Tags.of(this.vpc).add('Environment', 'Development');
+    cdk.Tags.of(this.vpc).add('ManagedBy', 'CDK');
   }
 }

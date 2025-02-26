@@ -19,7 +19,8 @@
   "context": {
  
  
-    
+      "aws-region": "us-east-1",
+    "environment": "dev",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [

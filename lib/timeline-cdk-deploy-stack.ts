@@ -5,7 +5,7 @@ import { Security } from './security';
 import { Compute } from './compute';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
-import { LoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancing';
+import { LoadBalancer } from './load-balancer';
 
 export class TimelineCdkDeployStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -14,47 +14,39 @@ export class TimelineCdkDeployStack extends cdk.Stack {
     // Initialize networking module with minimal resources
     const networking = new Networking(this, 'Networking');
     
-    // Initialize security module with secret value
+    // Initialize security module
     const security = new Security(this, 'Security', networking.vpc);
     
-    // Rest of your stack remains the same
+    // Initialize compute with EC2 instance
     const compute = new Compute(this, 'Compute', 
       networking.vpc,
       security
     );
+    
     // Initialize load balancer module
     const loadBalancer = new LoadBalancer(this, 'LoadBalancer', {
       vpc: networking.vpc,
-      internetFacing: true, 
-      listeners: [
-        {
-          externalPort: 80,
-          internalPort: 80
-        }
-      ],
-      subnetSelection: { subnetType: ec2.SubnetType.PUBLIC },
+      securityGroup: security.albSecurityGroup,
+      instance: compute.instance,
       healthCheck: {
         path: '/health',
-        port: 80,
-        interval: cdk.Duration.minutes(3),  
-    timeout: cdk.Duration.seconds(10),
-    
-    healthyThreshold: 3,
-    unhealthyThreshold: 2
+        interval: cdk.Duration.seconds(30),
+        timeout: cdk.Duration.seconds(5),
+        healthyThresholdCount: 2,
+        unhealthyThresholdCount: 2
       }
     });
-loadBalancer.connections.allowFrom(ec2.Peer.anyIpv4(), ec2.Port.tcp(80));
-loadBalancer.connections.allowTo(compute.instance, ec2.Port.tcp(80));
+    
+    // Set up cross-stack connections after the LoadBalancer is created
+    security.setupCrossStackConnections();
 
+    // Add stack outputs
+    new cdk.CfnOutput(this, 'LoadBalancerDns', {
+      value: loadBalancer.loadBalancer.loadBalancerDnsName,
+      description: 'The DNS name of the load balancer',
+      exportName: `${this.stackName}-LoadBalancerDns`
+    });
 
-// Add load balancer DNS to outputs
-new cdk.CfnOutput(this, 'LoadBalancerDns', {
-  value: loadBalancer.loadBalancerDnsName,
-  description: 'The DNS name of the load balancer',
-  exportName: `${this.stackName}-LoadBalancerDns`
-});
-
-    // === Stack Outputs ===
     new cdk.CfnOutput(this, 'InstancePublicIp', {
       value: compute.instance.instancePublicIp,
       description: 'The public IP address of the EC2 instance',

@@ -1,6 +1,6 @@
-# AWS CDK Load Balancer Stack 
 
-Deploys a production-ready infrastructure for a React application 
+# AWS CDK Load Balancer Stack Architecture  
+
 
 ## Architecture Components
 
@@ -74,3 +74,9 @@ For SSH access to the application server, first connect to the bastion host:
 ```bash
 ssh -i your-key.pem ec2-user@[BastionHostIP]
 ```
+
+---
+
+
+
+

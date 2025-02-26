@@ -2,12 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Security } from './security';
+import { SecretHelper } from './cache-helper';
  
-
- // Compute construct for the application.
- // By default, using free tier
- // Scale up the ec2 instance depending on business requirements, traffic, size, etc. 
- export class Compute extends Construct {
+export class Compute extends Construct {
   public readonly instance: ec2.Instance;
   public readonly securityGroup: ec2.SecurityGroup;
 
@@ -58,45 +55,43 @@ import { Security } from './security';
       '# System updates and dependencies',
       'yum update -y',
       'yum install -y docker git amazon-ssm-agent',
-  
-            
-      '# Add user to docker group (fixes permission issues)',
-      'usermod -aG docker $(whoami)',
       
-      '# Service configuration',
+      '# Start and enable services',
       'systemctl enable amazon-ssm-agent && systemctl start amazon-ssm-agent',
       'systemctl enable docker && systemctl start docker',
-    
-      '# Set correct permissions for Docker socket',
-      'chmod 666 /var/run/docker.sock',
-    
-      '# Application deployment',
+      
+      '# Create app directory with correct permissions',
       'mkdir -p /app',
       'cd /app',
-      '# Fix potential ownership issues',
-      'chown -R $(whoami):$(whoami) /app',
-      'git clone https://github.com/TylerFerguson-projects/timeline-wizard-frontend.git .',
       
-     
-    
-      '# Environment configuration',
-      `aws secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-east-1:051826723521:secret:ALLOWED_IP_CIDR-nxkLDR --region ${cdk.Stack.of(this).region} --query SecretString --output text > .env`,
-    
-      '# Container build and run',
-      'docker build -t timeline-app .',
-      '# Ensure Docker build completes successfully before running the container',
-      'if [ $? -eq 0 ]; then',
-      '  echo "Docker build successful, starting container..."',
-      '  docker run -d -p 80:3000 --restart unless-stopped --name timeline-app --env-file .env timeline-app',
-      'else',
-      '  echo "Docker build failed!"',
-      '  exit 1',
-      'fi',
-    
+      '# Make sure ec2-user owns the app directory',
+      'chown -R ec2-user:ec2-user /app',
+      
+      '# Add ec2-user to docker group - this is the default user on Amazon Linux',
+      'usermod -aG docker ec2-user',
+      
+      '# Clone the repository',
+      'su - ec2-user -c "git clone https://github.com/TylerFerguson-projects/timeline-wizard-frontend.git /app"',
+      
+      '# Get secrets as ec2-user',
+       'su - ec2-user -c "cd /app && aws secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-east-1:051826723521:secret:ALLOWED_IP_CIDR-nxkLDR --region us-east-1 --query SecretString --output text > .env"',
+
+      '# Build and run the container as ec2-user',
+      'su - ec2-user -c "cd /app && docker build -t timeline-app ."',
+      'su - ec2-user -c "cd /app && docker run -d -p 80:3000 --restart unless-stopped --name timeline-app --env-file .env timeline-app"',
+      
       '# Cleanup sensitive data',
-      'rm .env'
+      'su - ec2-user -c "cd /app && rm .env"',
+      
+      '# Wait for service to come up - helps with ALB health checks',
+      'echo "Waiting for application to start..."',
+      'sleep 10',
+      
+      '# Create a simple health check endpoint for the ALB',
+      'mkdir -p /var/www/html',
+      'echo "<html><body><h1>Health check OK</h1></body></html>" > /var/www/html/health',
+      'chmod 644 /var/www/html/health'
     );
-    
     
     return userData;
   }
