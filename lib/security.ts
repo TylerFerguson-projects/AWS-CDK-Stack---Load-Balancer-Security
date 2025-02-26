@@ -71,13 +71,20 @@ export class Security extends Construct {
       ]
     });
     
-    // Add policy to allow access to secrets
-    this.instanceRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: ['secretsmanager:GetSecretValue'],
-        resources: [this.appSecrets.secretArn],
-        effect: iam.Effect.ALLOW,
-      })
+   // Add policy to allow access to specific secrets
+this.instanceRole.addToPolicy(
+  new iam.PolicyStatement({
+    actions: ['secretsmanager:GetSecretValue'],
+    resources: [
+      this.appSecrets.secretArn,
+      'arn:aws:secretsmanager:us-east-1:051826723521:secret:ALLOWED_IP_CIDR-nxkLDR'
+    ],
+    effect: iam.Effect.ALLOW,
+  })
+);
+    this.instanceRole.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy')
     );
   }
+  
 }

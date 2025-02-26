@@ -58,7 +58,8 @@ import { Security } from './security';
       '# System updates and dependencies',
       'yum update -y',
       'yum install -y docker git amazon-ssm-agent',
-    
+  
+            
       '# Add user to docker group (fixes permission issues)',
       'usermod -aG docker $(whoami)',
       
@@ -79,7 +80,7 @@ import { Security } from './security';
      
     
       '# Environment configuration',
-      `aws secretsmanager get-secret-value --secret-id ${security.appSecrets.secretArn} --region ${cdk.Stack.of(this).region} --query SecretString --output text > .env`,
+      `aws secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-east-1:051826723521:secret:ALLOWED_IP_CIDR-nxkLDR --region ${cdk.Stack.of(this).region} --query SecretString --output text > .env`,
     
       '# Container build and run',
       'docker build -t timeline-app .',
