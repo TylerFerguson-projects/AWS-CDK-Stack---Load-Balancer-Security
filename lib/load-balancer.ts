@@ -27,14 +27,6 @@ export interface LoadBalancerProps {
   };
 }
 
-/**
- * LoadBalancer construct for the Timeline application.
- * 
- * Provisions:
- * - Application Load Balancer in public subnets
- * - Target group with the application instance
- * - HTTP listener for routing traffic
- */
 export class LoadBalancer extends Construct {
   /** The Application Load Balancer */
   public readonly loadBalancer: elbv2.ApplicationLoadBalancer;
@@ -42,13 +34,7 @@ export class LoadBalancer extends Construct {
   /** Target group for the application instance */
   public readonly targetGroup: elbv2.ApplicationTargetGroup;
 
-  /**
-   * Creates a new LoadBalancer construct for the Timeline application
-   * 
-   * @param scope - Parent construct
-   * @param id - Construct ID
-   * @param props - LoadBalancer properties
-   */
+ 
   constructor(scope: Construct, id: string, props: LoadBalancerProps) {
     super(scope, id);
 
