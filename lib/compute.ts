@@ -2,8 +2,10 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Security } from './security';
-import { SecretHelper } from './cache-helper';
  
+// T2 Micro for free tier, can scale to business requirements
+// Uses script for installs, permissions, git, and docker actions.
+
 export class Compute extends Construct {
   public readonly instance: ec2.Instance;
   public readonly securityGroup: ec2.SecurityGroup;
