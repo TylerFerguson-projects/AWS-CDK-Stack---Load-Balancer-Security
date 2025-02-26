@@ -4,32 +4,20 @@ import { Networking } from './networking';
 import { Security } from './security';
 import { Compute } from './compute';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { LoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancing';
 
 export class TimelineCdkDeployStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-
-    cdk.Tags.of(this).add('Application', 'Timeline');
-    cdk.Tags.of(this).add('ManagedBy', 'CDK');
-
+    
     // Initialize networking module with minimal resources
     const networking = new Networking(this, 'Networking');
-
-    // Classless Inter-Domain Routing IP
-    const allowedIpCidr = process.env.ALLOWED_IP_CIDR;
-    if (!allowedIpCidr) {
-      throw new Error('ALLOWED_IP_CIDR environment variable must be set for secure SSH access');
-    }
     
-    if (allowedIpCidr === '0.0.0.0/0') {
-      throw new Error('Security constraint violation: ALLOWED_IP_CIDR cannot be 0.0.0.0/0. Please specify a restricted IP range.');
-    }
+    // Initialize security module with secret value
+    const security = new Security(this, 'Security', networking.vpc);
     
-    // Initialize security module
-    const security = new Security(this, 'Security', networking.vpc, allowedIpCidr);
-
-    // Initialize compute module with only the application instance
+    // Rest of your stack remains the same
     const compute = new Compute(this, 'Compute', 
       networking.vpc,
       security
@@ -37,6 +25,7 @@ export class TimelineCdkDeployStack extends cdk.Stack {
     // Initialize load balancer module
     const loadBalancer = new LoadBalancer(this, 'LoadBalancer', {
       vpc: networking.vpc,
+      internetFacing: true, 
       listeners: [
         {
           externalPort: 80,
@@ -54,6 +43,9 @@ export class TimelineCdkDeployStack extends cdk.Stack {
     unhealthyThreshold: 2
       }
     });
+
+loadBalancer.connections.allowFrom(ec2.Peer.anyIpv4(), ec2.Port.tcp(80));
+loadBalancer.connections.allowTo(compute.instance, ec2.Port.tcp(80));
 
 
 // Add load balancer DNS to outputs

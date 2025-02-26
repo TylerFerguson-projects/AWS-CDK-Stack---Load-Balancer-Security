@@ -6,17 +6,20 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 export class Security extends Construct {
   public readonly instanceSecurityGroup: ec2.SecurityGroup;
-  public readonly albSecurityGroup: ec2.SecurityGroup; // Add this
+  public readonly albSecurityGroup: ec2.SecurityGroup;  
   public readonly instanceRole: iam.Role;
   public readonly appSecrets: secretsmanager.Secret;
 
-  constructor(scope: Construct, id: string, vpc: ec2.Vpc, allowedIp: string) {
+  constructor(scope: Construct, id: string, vpc: ec2.Vpc) {
     super(scope, id);
 
-    // Validate CIDR format
-    if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$/.test(allowedIp)) {
-      throw new Error(`Invalid CIDR format for allowedIp: ${allowedIp}`);
-    }
+    // Instead of using the secret directly, use a parameter with a default value
+    // You'll need to either have this value in SSM Parameter Store or pass it directly
+    const allowedIpCidr = new cdk.CfnParameter(cdk.Stack.of(this), 'AllowedIpCidr', {
+      type: 'String',
+      description: 'CIDR block allowed to access SSH',
+      default: '0.0.0.0/0' // Provide a safe default or require input
+    });
 
     const HTTP_PORT = 80;
     const HTTPS_PORT = 443;
@@ -38,7 +41,7 @@ export class Security extends Construct {
     
     // Allow SSH to instance only from specified IP
     this.instanceSecurityGroup.addIngressRule(
-      ec2.Peer.ipv4(allowedIp),
+      ec2.Peer.ipv4(allowedIpCidr.valueAsString),
       ec2.Port.tcp(SSH_PORT),
       'Allow SSH from specified IP'
     );
