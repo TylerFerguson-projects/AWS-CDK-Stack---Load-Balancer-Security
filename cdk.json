@@ -17,12 +17,14 @@
     ]
   },
   "context": {
+   
     "production": {
       "allowedIp": "203.0.113.0/24"
     },
     "staging": {
       "allowedIp": "198.51.100.0/24"
     },
+    
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
