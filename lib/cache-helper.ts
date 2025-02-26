@@ -32,8 +32,8 @@ export class SecretHelper {
     console.log(`Fetching secret from AWS: ${secretId}`);
     
     try {
-      // This code would run on your deployment machine or in Lambda
-      // Note: This is demonstration code - in production you'd use AWS SDK
+      
+      // In prod, just use AWS SDK for security
       const result = await fetchSecretFromAWS(secretId, region);
       
       // Store in cache for future use
