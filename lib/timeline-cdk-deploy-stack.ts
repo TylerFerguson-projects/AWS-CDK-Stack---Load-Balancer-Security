@@ -43,7 +43,6 @@ export class TimelineCdkDeployStack extends cdk.Stack {
     unhealthyThreshold: 2
       }
     });
-
 loadBalancer.connections.allowFrom(ec2.Peer.anyIpv4(), ec2.Port.tcp(80));
 loadBalancer.connections.allowTo(compute.instance, ec2.Port.tcp(80));
 

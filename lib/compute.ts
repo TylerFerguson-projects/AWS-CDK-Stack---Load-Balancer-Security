@@ -58,26 +58,44 @@ import { Security } from './security';
       '# System updates and dependencies',
       'yum update -y',
       'yum install -y docker git amazon-ssm-agent',
+    
+      '# Add user to docker group (fixes permission issues)',
+      'usermod -aG docker $(whoami)',
       
       '# Service configuration',
       'systemctl enable amazon-ssm-agent && systemctl start amazon-ssm-agent',
-      'systemctl start docker && systemctl enable docker',
-      
+      'systemctl enable docker && systemctl start docker',
+    
+      '# Set correct permissions for Docker socket',
+      'chmod 666 /var/run/docker.sock',
+    
       '# Application deployment',
       'mkdir -p /app',
       'cd /app',
+      '# Fix potential ownership issues',
+      'chown -R $(whoami):$(whoami) /app',
       'git clone https://github.com/TylerFerguson-projects/timeline-wizard-frontend.git .',
       
+     
+    
       '# Environment configuration',
       `aws secretsmanager get-secret-value --secret-id ${security.appSecrets.secretArn} --region ${cdk.Stack.of(this).region} --query SecretString --output text > .env`,
-      
+    
       '# Container build and run',
       'docker build -t timeline-app .',
-      'docker run -d -p 80:3000 --restart unless-stopped --name timeline-app --env-file .env timeline-app',
-      
+      '# Ensure Docker build completes successfully before running the container',
+      'if [ $? -eq 0 ]; then',
+      '  echo "Docker build successful, starting container..."',
+      '  docker run -d -p 80:3000 --restart unless-stopped --name timeline-app --env-file .env timeline-app',
+      'else',
+      '  echo "Docker build failed!"',
+      '  exit 1',
+      'fi',
+    
       '# Cleanup sensitive data',
       'rm .env'
     );
+    
     
     return userData;
   }
