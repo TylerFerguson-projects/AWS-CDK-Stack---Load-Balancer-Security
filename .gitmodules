@@ -1,0 +1,3 @@
+[submodule "timeline-wizard-frontend"]
+	path = timeline-wizard-frontend
+	url = https://github.com/TylerFerguson-projects/timeline-wizard-frontend.git
