@@ -18,6 +18,11 @@ export class Networking extends Construct {
           subnetType: ec2.SubnetType.PUBLIC,
           cidrMask: 24,
           mapPublicIpOnLaunch: true
+        },
+        {
+          name: 'timeline-private',
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+          cidrMask: 24
         }
       ],
       enableDnsSupport: true,

@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import { Networking } from './networking';
 import { Security } from './security';
 import { Compute } from './compute';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { LoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancing';
 
 export class TimelineCdkDeployStack extends cdk.Stack {
@@ -36,11 +37,19 @@ export class TimelineCdkDeployStack extends cdk.Stack {
     // Initialize load balancer module
     const loadBalancer = new LoadBalancer(this, 'LoadBalancer', {
       vpc: networking.vpc,
+      listeners: [
+        {
+          externalPort: 80,
+          internalPort: 80
+        }
+      ],
+      subnetSelection: { subnetType: ec2.SubnetType.PUBLIC },
       healthCheck: {
         path: '/health',
         port: 80,
         interval: cdk.Duration.minutes(3),  
     timeout: cdk.Duration.seconds(10),
+    
     healthyThreshold: 3,
     unhealthyThreshold: 2
       }
