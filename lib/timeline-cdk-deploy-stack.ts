@@ -38,7 +38,11 @@ export class TimelineCdkDeployStack extends cdk.Stack {
       vpc: networking.vpc,
       healthCheck: {
         path: '/health',
-        port: 80
+        port: 80,
+        interval: cdk.Duration.minutes(3),  
+    timeout: cdk.Duration.seconds(10),
+    healthyThreshold: 3,
+    unhealthyThreshold: 2
       }
     });
 
