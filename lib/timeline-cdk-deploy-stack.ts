@@ -15,7 +15,7 @@ export class TimelineCdkDeployStack extends cdk.Stack {
     // Initialize networking module with minimal resources
     const networking = new Networking(this, 'Networking');
 
-    // Get and validate allowed IP CIDR for SSH access
+    // Classless Inter-Domain Routing IP
     const allowedIpCidr = process.env.ALLOWED_IP_CIDR;
     if (!allowedIpCidr) {
       throw new Error('ALLOWED_IP_CIDR environment variable must be set for secure SSH access');
@@ -45,6 +45,7 @@ export class TimelineCdkDeployStack extends cdk.Stack {
     unhealthyThreshold: 2
       }
     });
+
 
 // Add load balancer DNS to outputs
 new cdk.CfnOutput(this, 'LoadBalancerDns', {

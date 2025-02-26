@@ -19,7 +19,7 @@ import { Security } from './security';
   ) {
     super(scope, id);
 
-    this.securityGroup = security.securityGroup;
+    this.securityGroup = security.albSecurityGroup;
 
     // Free Tier Instance
     this.instance = new ec2.Instance(this, 'TimelineInstance', {
