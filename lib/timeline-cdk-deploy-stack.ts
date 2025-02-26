@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import { Networking } from './networking';
 import { Security } from './security';
 import { Compute } from './compute';
+import { LoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancing';
 
 export class TimelineCdkDeployStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -32,6 +33,21 @@ export class TimelineCdkDeployStack extends cdk.Stack {
       networking.vpc,
       security
     );
+    // Initialize load balancer module
+    const loadBalancer = new LoadBalancer(this, 'LoadBalancer', {
+      vpc: networking.vpc,
+      healthCheck: {
+        path: '/health',
+        port: 80
+      }
+    });
+
+// Add load balancer DNS to outputs
+new cdk.CfnOutput(this, 'LoadBalancerDns', {
+  value: loadBalancer.loadBalancerDnsName,
+  description: 'The DNS name of the load balancer',
+  exportName: `${this.stackName}-LoadBalancerDns`
+});
 
     // === Stack Outputs ===
     new cdk.CfnOutput(this, 'InstancePublicIp', {

@@ -4,9 +4,9 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Security } from './security';
  
 
-
-
  // Compute construct for the application.
+ // By default, using free tier
+ // Scale up the ec2 instance depending on business requirements, traffic, size, etc. 
  export class Compute extends Construct {
   public readonly instance: ec2.Instance;
   public readonly securityGroup: ec2.SecurityGroup;
@@ -19,7 +19,7 @@ import { Security } from './security';
   ) {
     super(scope, id);
 
-    this.securityGroup = security.timelineSecurityGroup;
+    this.securityGroup = security.securityGroup;
 
     // Free Tier Instance
     this.instance = new ec2.Instance(this, 'TimelineInstance', {
@@ -34,7 +34,7 @@ import { Security } from './security';
     
     cdk.Tags.of(this.instance).add('Application', 'Timeline');
 
-    // Storage
+    // Storage Volume for Ec2
     this.instance.instance.addPropertyOverride('BlockDeviceMappings', [
       {
         DeviceName: '/dev/xvda',
@@ -54,16 +54,28 @@ import { Security } from './security';
     userData.addCommands(
       '#!/bin/bash',
       'set -e',
+      
+      '# System updates and dependencies',
       'yum update -y',
       'yum install -y docker git amazon-ssm-agent',
+      
+      '# Service configuration',
       'systemctl enable amazon-ssm-agent && systemctl start amazon-ssm-agent',
       'systemctl start docker && systemctl enable docker',
+      
+      '# Application deployment',
       'mkdir -p /app',
       'cd /app',
       'git clone https://github.com/TylerFerguson-projects/timeline-wizard-frontend.git .',
+      
+      '# Environment configuration',
       `aws secretsmanager get-secret-value --secret-id ${security.appSecrets.secretArn} --region ${cdk.Stack.of(this).region} --query SecretString --output text > .env`,
+      
+      '# Container build and run',
       'docker build -t timeline-app .',
       'docker run -d -p 80:3000 --restart unless-stopped --name timeline-app --env-file .env timeline-app',
+      
+      '# Cleanup sensitive data',
       'rm .env'
     );
     

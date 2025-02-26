@@ -5,7 +5,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 export class Security extends Construct {
-  public readonly timelineSecurityGroup: ec2.SecurityGroup;
+  public readonly securityGroup: ec2.SecurityGroup;
   public readonly instanceRole: iam.Role;
   public readonly appSecrets: secretsmanager.Secret;
 
@@ -19,21 +19,21 @@ export class Security extends Construct {
     const HTTP_PORT = 80;
     const SSH_PORT = 22;
  
-    this.timelineSecurityGroup = new ec2.SecurityGroup(this, 'TimelineSecurityGroup', {
+    this.securityGroup = new ec2.SecurityGroup(this, 'securityGroup', {
       vpc,
       allowAllOutbound: true, 
       description: 'Controls access to the Timeline application instance',
     });
     
     // Allow SSH from the specified IP
-    this.timelineSecurityGroup.addIngressRule(
+    this.securityGroup.addIngressRule(
       ec2.Peer.ipv4(allowedIp),
       ec2.Port.tcp(SSH_PORT),
       'Allow SSH from specified IP'
     );
 
     // Allow HTTP from anywhere
-    this.timelineSecurityGroup.addIngressRule(
+    this.securityGroup.addIngressRule(
       ec2.Peer.anyIpv4(),
       ec2.Port.tcp(HTTP_PORT),
       'Allow HTTP from anywhere'

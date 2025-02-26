@@ -4,20 +4,22 @@ import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
 import { Construct } from 'constructs';
 
-/**
- * Properties for the LoadBalancer construct
- */
+
+// Load Balancer
+// Scalable, highly available architecture for routing HTTP traffic
+// 
+
 export interface LoadBalancerProps {
-  /** VPC where the load balancer will be deployed */
+  // VPC where the load balancer will be deployed  
   vpc: ec2.Vpc;
   
-  /** Security group for the load balancer */
+  // Security group for the load balancer 
   securityGroup: ec2.SecurityGroup;
   
-  /** EC2 instance to register as a target */
+  // EC2 instance to register as a target  
   instance: ec2.Instance;
   
-  /** Health check configuration options */
+  // Health check configuration options 
   healthCheck?: {
     path?: string;
     interval?: cdk.Duration;
@@ -28,10 +30,10 @@ export interface LoadBalancerProps {
 }
 
 export class LoadBalancer extends Construct {
-  /** The Application Load Balancer */
+  // The Application Load Balancer 
   public readonly loadBalancer: elbv2.ApplicationLoadBalancer;
   
-  /** Target group for the application instance */
+  // Target group for the application instance 
   public readonly targetGroup: elbv2.ApplicationTargetGroup;
 
  
